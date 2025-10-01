@@ -1,0 +1,26 @@
+#! /bin/bash
+# Võtab parameetriks faili kasutajanimedega ja loob vastavalt sellele kasutajad kasutades
+# varasemalt loodud skripti
+
+skripti_jooksutaja=$(whoami)
+if [ $skripti_jooksutaja = "root" ]; then
+	if [ $# -ne 1 ]; then
+		echo "Kasutus: $0 kasutajate_fail"
+	else
+		fail=$1
+		if [ -f $fail -a -r $fail ]; then
+			echo "Fail sobib"
+			for nimi in $(cat $fail); do
+				useradd $nimi -m -s /bin/bash
+				parool=$(pwgen -s 8 -1)
+				echo "$nimi:$parool" | chpasswd
+				echo "$nimi - $parool" >> loodud_kasutajad_paroolidega
+			done
+		else
+			echo "Probleem antud failiga $fail"
+		fi
+	fi
+else
+	echo "Puuduvad õigused. Kasuta root skripti jooksutamiseks."
+	exit 1
+fi
