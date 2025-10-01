@@ -1,0 +1,25 @@
+#! /bin/bash
+# Skript lisab kasutaja vastavalt parameetrile mille skripti kasutaja andis
+
+#Õiguste kontroll
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Puuduvad õigused. Kasuta sudo või root skripti jooksutamiseks."
+    exit 1
+fi
+
+if [ $# -ne 1 ];then
+	echo "Käivita skript koos kasutajanimega. ./lisa_kasutaja <nimi>"
+else
+	kasutajanimi=$1
+	useradd $kasutajanimi -m -s /bin/bash
+	tulemus=$?
+
+	if [ $tulemus -eq 0 ]; then
+		echo "Kasutaja $kasutajanimi lisatud edukalt"
+		cat /etc/passwd | grep $kasutajanimi
+		ls -la /home/$kasutajanimi
+	else
+		echo "Probleem $kasutajanimi lisamisel"
+		echo "Kood $tulemus"
+	fi
+fi
