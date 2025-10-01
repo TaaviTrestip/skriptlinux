@@ -1,0 +1,45 @@
+#! /bin/bash
+# Kasutajate lisamine andes kasutajate faili ja parooli faili eraldi
+
+#Õiguste kontroll
+if [ "$(id -u)" -ne 0 ]; then
+	echo "Puuduvad õigused. Kasuta sudo või root skripti jooksutamiseks."
+	exit 1
+fi
+
+if [ $# -ne 2 ]; then
+	echo "Kasutamine: $0 <kasutajad_fail> <paroolid_fail>"
+	exit 1
+fi
+
+kasutajad=$1
+paroolid=$2
+
+if [ ! -f "$kasutajad" ] || [ ! -f "$paroolid" ]; then
+	echo "Faili ei leitud!"
+	exit 1
+fi
+
+if [ -f $kasutajad -a -r $kasutajad ]; then
+	echo "Fail sobib"
+else
+	echo "Probleem antud failiga"
+fi
+
+if [ -f $paroolid -a -r $paroolid ]; then
+	echo "Fail sobib"
+else
+	echo "Probleem antud failiga"
+fi
+
+paste "$kasutajad" "$paroolid" | while read nimi parool; do
+	if id "$nimi" &>/dev/null; then
+		echo "Kasutaja $nimi juba olemas"
+	else
+		useradd $nimi -m -s /bin/bash
+		echo "$nimi:$parool" | chpasswd
+		echo "Kasutaja $nimi lisatud"
+		cat /etc/passwd | grep $nimi
+		ls -la /home/$nimi
+	fi
+done
