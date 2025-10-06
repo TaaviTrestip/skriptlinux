@@ -20,7 +20,6 @@ logfile=~/skriptlinux/praks2/backup/backup.log
 backup_file="$src_base.backup.$date.tar.zst"
 backup_file1="$src_base.backup.$date.tar.gz"
 backup_file2="$src_base.backup.$date.tar.xz"
-ignore_file="$src/.backupignore"
 
 tempdir=$(mktemp -d)
 trap 'echo "Cleaning temp files..."; rm -rf "$tempdir"' EXIT
@@ -34,15 +33,10 @@ if [ "$free_space" -lt "$src_size" ]; then
 	exit 1
 fi
 
-ignore=()
-if [ -f "$ignore_file" ]; then
-  ignore=( --exclude-from="$ignore_file" )
-fi
-
 echo "Enough free space executing order 67."
 
 echo "Dry run. Using .backupignore to not include something."
-tar "${ignore[@]}" -cf - -C "$(dirname "$src")" "$src_base" | tar -tvf -
+tar --exclude-from="$src/.backupignore" -cf - -C "$(dirname "$src")" "$src_base" | tar -tvf -
 
 read -p "Would you like to continue with backup (yes or no): " answer
 
