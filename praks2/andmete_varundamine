@@ -5,8 +5,17 @@ src_base=$(basename "$src")
 backup_dest=~/skriptlinux/praks2/backup
 date=$(date +"%d%b%Y_%H-%M-%S" | tr '[:upper:]' '[:lower:]')
 logfile=~/skriptlinux/praks2/backup/backup.log
-
 backup_file="$src_base.backup.$date.tar.zst"
+
+src_size=$(du -sb ~/skriptlinux/praks2/src | awk '{print $1}')
+free_space=$(df -B1 ~/skriptlinux/praks2/backup | awk 'NR==2{print $4}')
+
+if [ "$free_space" -lt "$src_size" ]; then
+    echo "Not enough space to backup on your disk."
+    exit 1
+fi
+
+echo "Enough free space executing order 67."
 
 echo "Dry run. These files will be added to the archive."
 tar --exclude='*.jpg' --exclude='bin' -cf - -C ~/skriptlinux/praks2 src | tar -tvf -
