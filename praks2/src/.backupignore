@@ -1,0 +1,4 @@
+# .backupignore
+imgs/
+*.jpg
+bin/
