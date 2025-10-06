@@ -6,6 +6,8 @@ backup_dest=~/skriptlinux/praks2/backup
 date=$(date +"%d%b%Y_%H-%M-%S" | tr '[:upper:]' '[:lower:]')
 logfile=~/skriptlinux/praks2/backup/backup.log
 backup_file="$src_base.backup.$date.tar.zst"
+backup_file1="$src_base.backup.$date.tar.gz"
+backup_file2="$src_base.backup.$date.tar.xz"
 
 src_size=$(du -sb ~/skriptlinux/praks2/src | awk '{print $1}')
 free_space=$(df -B1 ~/skriptlinux/praks2/backup | awk 'NR==2{print $4}')
@@ -18,35 +20,51 @@ fi
 echo "Enough free space executing order 67."
 
 echo "Dry run. These files will be added to the archive."
-tar --exclude='*.jpg' --exclude='bin' -cf - -C ~/skriptlinux/praks2 src | tar -tvf -
+tar --exclude='*.jpg' --exclude='bin' -cf - -C "$(dirname "$src")" "$src_base" | tar -tvf -
 
 read -p "Would you like to continue with backup (yes/no): " answer
 
 if [[ "$answer" =~ ^(yes)$ ]]; then
 	echo "[ $(date '+%F %T') ] BACKUP START" >> "$logfile"
 	if tar -I 'zstd -19 -T0' --exclude='*.jpg' --exclude='bin' -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
+		tar  --exclude='*.jpg' --exclude='bin' -czf "$backup_dest/$backup_file1" -C "$(dirname "$src")" "$src_base"
+		tar --exclude='*.jpg' --exclude='bin' -cJf "$backup_dest/$backup_file2" -C "$(dirname "$src")" "$src_base"
 		echo "Backup completed."
 	else
 		echo "Backup not completed. You might not have enough permissions."
 		[ -f "$backup_dest/$backup_file" ] && rm -f "$backup_dest/$backup_file"
+		[ -f "$backup_dest/$backup_file1" ] && rm -f "$backup_dest/$backup_file1"
+		[ -f "$backup_dest/$backup_file2" ] && rm -f "$backup_dest/$backup_file2"
 		exit 1
 	fi
 
 	echo "First five lines of completed backup for checking: "
 	tar -I 'zstd -d' -tf "$backup_dest/$backup_file" | head -n 5
+	tar -z -tf "$backup_dest/$backup_file1" | head -n 5
+	tar -J -tf "$backup_dest/$backup_file2" | head -n 5
 
 	echo -n "Size of the archive is: "
 	du -h "$backup_dest/$backup_file" | awk '{print $1}'
+	du -h "$backup_dest/$backup_file1" | awk '{print $1}'
+	du -h "$backup_dest/$backup_file2" | awk '{print $1}'
 
 	echo "Deleting old backups. Leaving only 3 most recent backups."
 	ls -1t "$backup_dest/$src_base.backup."*.tar.zst | tail -n +4 | xargs -r rm -f
+	ls -1t "$backup_dest/$src_base.backup."*.tar.gz | tail -n +4 | xargs -r rm -f
+	ls -1t "$backup_dest/$src_base.backup."*.tar.xz | tail -n +4 | xargs -r rm -f
 	echo ""
 
 	sha256_archive="$backup_dest/$backup_file"
+	sha256_archive1="$backup_dest/$backup_file1"
+	sha256_archive2="$backup_dest/$backup_file2"
 	sha256sum "$sha256_archive" > "$sha256_archive.sha256"
+	sha256sum "$sha256_archive1" > "$sha256_archive1.sha256"
+	sha256sum "$sha256_archive2" > "$sha256_archive2.sha256"
 
 	echo "Checking SHA256 checksum..."
 	sha256sum -c "$sha256_archive.sha256"
+	sha256sum -c "$sha256_archive1.sha256"
+	sha256sum -c "$sha256_archive2.sha256"
 
 	echo "[ $(date '+%F %T') ] BACKUP END" >> "$logfile"
 else
