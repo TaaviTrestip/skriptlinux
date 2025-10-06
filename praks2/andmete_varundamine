@@ -40,6 +40,14 @@ if [[ "$answer" =~ ^(yes)$ ]]; then
 
 	echo "Deleting old backups. Leaving only 3 most recent backups."
 	ls -1t "$backup_dest/$src_base.backup."*.tar.zst | tail -n +4 | xargs -r rm -f
+	echo ""
+
+	sha256_archive="$backup_dest/$backup_file"
+	sha256sum "$sha256_archive" > "$sha256_archive.sha256"
+
+	echo "Checking SHA256 checksum..."
+	sha256sum -c "$sha256_archive.sha256"
+
 	echo "[ $(date '+%F %T') ] BACKUP END" >> "$logfile"
 else
 	echo "Backup cancelled."
