@@ -26,9 +26,9 @@ read -p "Would you like to continue with backup (yes/no): " answer
 
 if [[ "$answer" =~ ^(yes)$ ]]; then
 	echo "[ $(date '+%F %T') ] BACKUP START" >> "$logfile"
-	if tar -I 'zstd -19 -T0' --exclude='*.jpg' --exclude='bin' -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
-		tar  --exclude='*.jpg' --exclude='bin' -czf "$backup_dest/$backup_file1" -C "$(dirname "$src")" "$src_base"
-		tar --exclude='*.jpg' --exclude='bin' -cJf "$backup_dest/$backup_file2" -C "$(dirname "$src")" "$src_base"
+	if tar -I 'zstd -19 -T0' --exclude-from=src/.backupignore -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
+		tar --exclude-from=src/.backupignore -czf "$backup_dest/$backup_file1" -C "$(dirname "$src")" "$src_base"
+		tar --exclude-from=src/.backupignore -cJf "$backup_dest/$backup_file2" -C "$(dirname "$src")" "$src_base"
 		echo "Backup completed."
 	else
 		echo "Backup not completed. You might not have enough permissions."
