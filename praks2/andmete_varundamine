@@ -4,6 +4,7 @@ src=~/skriptlinux/praks2/src
 src_base=$(basename "$src")
 backup_dest=~/skriptlinux/praks2/backup
 date=$(date +"%d%b%Y_%H-%M-%S" | tr '[:upper:]' '[:lower:]')
+logfile=~/skriptlinux/praks2/backup/backup.log
 
 backup_file="$src_base.backup.$date.tar.zst"
 
@@ -13,6 +14,7 @@ tar --exclude='*.jpg' --exclude='bin' -cf - -C ~/skriptlinux/praks2 src | tar -t
 read -p "Would you like to continue with backup (yes/no): " answer
 
 if [[ "$answer" =~ ^(yes)$ ]]; then
+	echo "[ $(date '+%F %T') ] BACKUP START" >> "$logfile"
 	if tar -I 'zstd -19 -T0' --exclude='*.jpg' --exclude='bin' -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
 		echo "Backup completed."
 	else
@@ -29,6 +31,7 @@ if [[ "$answer" =~ ^(yes)$ ]]; then
 
 	echo "Deleting old backups. Leaving only 3 most recent backups."
 	ls -1t "$backup_dest/$src_base.backup."*.tar.zst | tail -n +4 | xargs -r rm -f
+	echo "[ $(date '+%F %T') ] BACKUP END" >> "$logfile"
 else
 	echo "Backup cancelled."
 	exit 1
