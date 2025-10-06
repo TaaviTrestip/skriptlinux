@@ -35,3 +35,6 @@ fi
 
 echo "First five lines of completed backup for checking: "
 tar -I 'zstd -d' -tf "$backup_dest/$backup_file" | head -n 5
+
+echo -n "Size of the archive is: "
+du -h "$backup_dest/$backup_file" | awk '{print $1}'
