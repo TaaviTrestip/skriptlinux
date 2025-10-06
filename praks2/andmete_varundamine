@@ -7,7 +7,7 @@ date=$(date +"%d%b%Y_%H-%M-%S" | tr '[:upper:]' '[:lower:]')
 
 backup_file="$src_base.backup.$date.tar.zst"
 
-if tar -I 'zstd -19 -T0' -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
+if tar -I 'zstd -19 -T0' --exclude='*.jpg' --exclude='bin' -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
 	echo "Backup completed."
 else
 	echo "Backup not completed. You might not have enough permissions."
