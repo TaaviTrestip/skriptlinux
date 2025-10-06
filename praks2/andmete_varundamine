@@ -1,0 +1,37 @@
+#! /bin/bash
+
+src=~/skriptlinux/praks2/src
+src_base=$(basename "$src")
+backup_dest=~/skriptlinux/praks2/backup
+date=$(date +"%d%b%Y" | tr '[:upper:]' '[:lower:]')
+
+function free_file_name() {
+    local base_name="$1"
+    local dest="$2"
+    local number=1
+    local backup_file="$base_name.backup.$date.tar.zst"
+
+    if [ ! -e "$dest/$backup_file" ]; then
+        echo "$backup_file"
+        return
+    fi
+
+    while [ -e "$dest/$base_name.backup.$date.$number.tar.zst" ]; do
+        number=$((number + 1))
+    done
+
+    echo "$base_name.backup.$date.$number.tar.zst"
+}
+
+backup_file=$(free_file_name "$src_base" "$backup_dest")
+
+if tar -I 'zstd -19 -T0' -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
+	echo "Backup completed."
+else
+	echo "Backup not completed. You might not have enough permissions."
+	[ -f "$backup_dest/$backup_file" ] && rm -f "$backup_dest/$backup_file"
+	exit 1
+fi
+
+echo "First five lines of completed backup for checking: "
+tar -I 'zstd -d' -tf "$backup_dest/$backup_file" | head -n 5
