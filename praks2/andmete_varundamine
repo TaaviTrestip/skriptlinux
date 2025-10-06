@@ -7,19 +7,29 @@ date=$(date +"%d%b%Y_%H-%M-%S" | tr '[:upper:]' '[:lower:]')
 
 backup_file="$src_base.backup.$date.tar.zst"
 
-if tar -I 'zstd -19 -T0' --exclude='*.jpg' --exclude='bin' -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
-	echo "Backup completed."
+echo "Dry run. These files will be added to the archive."
+tar --exclude='*.jpg' --exclude='bin' -cf - -C ~/skriptlinux/praks2 src | tar -tvf -
+
+read -p "Would you like to continue with backup (yes/no): " answer
+
+if [[ "$answer" =~ ^(yes)$ ]]; then
+	if tar -I 'zstd -19 -T0' --exclude='*.jpg' --exclude='bin' -cf "$backup_dest/$backup_file" -C "$(dirname "$src")" "$src_base" 2>/dev/null; then
+		echo "Backup completed."
+	else
+		echo "Backup not completed. You might not have enough permissions."
+		[ -f "$backup_dest/$backup_file" ] && rm -f "$backup_dest/$backup_file"
+		exit 1
+	fi
+
+	echo "First five lines of completed backup for checking: "
+	tar -I 'zstd -d' -tf "$backup_dest/$backup_file" | head -n 5
+
+	echo -n "Size of the archive is: "
+	du -h "$backup_dest/$backup_file" | awk '{print $1}'
+
+	echo "Deleting old backups. Leaving only 3 most recent backups."
+	ls -1t "$backup_dest/$src_base.backup."*.tar.zst | tail -n +4 | xargs -r rm -f
 else
-	echo "Backup not completed. You might not have enough permissions."
-	[ -f "$backup_dest/$backup_file" ] && rm -f "$backup_dest/$backup_file"
+	echo "Backup cancelled."
 	exit 1
 fi
-
-echo "First five lines of completed backup for checking: "
-tar -I 'zstd -d' -tf "$backup_dest/$backup_file" | head -n 5
-
-echo -n "Size of the archive is: "
-du -h "$backup_dest/$backup_file" | awk '{print $1}'
-
-echo "Deleting old backups. Leaving only 3 most recent backups."
-ls -1t "$backup_dest/$src_base.backup."*.tar.zst | tail -n +4 | xargs -r rm -f
